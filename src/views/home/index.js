@@ -6,23 +6,28 @@ import {
   Button,
   Image,
   Badge,
-  useToast
+  useToast,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useWeb3React } from "@web3-react/core";
 import { useNFTPunks } from "../../hooks/useNFTPunks";
+import useTruncatedAddress from "../../hooks/useTruncatedAddress";
 import { useCallback, useEffect, useState } from "react";
 
 export const Home = () => {
   const [isMinting, setIsMinting] = useState(false);
   const [imageSrc, setImageSrc] = useState("");
+  const [next, setNext] = useState(1);
   const { active, account } = useWeb3React();
   const NFTPunks = useNFTPunks();
   const toast = useToast();
 
+  const truncatedAddress = useTruncatedAddress(account);
+
   const getNFTPunksData = useCallback(async () => {
     if (NFTPunks) {
       const totalSupply = await NFTPunks.methods.totalSupply().call();
+      setNext(Number(totalSupply) + 1);
       const dnaPreview = await NFTPunks.methods
         .deterministicPseudoRandomDNA(totalSupply, account)
         .call();
@@ -41,25 +46,25 @@ export const Home = () => {
       })
       .on("transactionHash", (txHash) => {
         toast({
-          title:"Transaccion enviada",
+          title: "Transaccion enviada",
           description: txHash,
-          status: "info"
-        })
+          status: "info",
+        });
       })
       .on("receipt", () => {
         toast({
-          title:"Transaccion confirmada",
+          title: "Transaccion confirmada",
           description: "Nunca pares de aprender",
-          status: "success"
-        })
+          status: "success",
+        });
         setIsMinting(false);
       })
       .on("error", (err) => {
         toast({
-          title:"Transaccion fallida",
+          title: "Transaccion fallida",
           description: err.message,
-          status: "error"
-        })
+          status: "error",
+        });
         setIsMinting(false);
       });
   };
@@ -152,13 +157,13 @@ export const Home = () => {
               <Badge>
                 Next ID:
                 <Badge ml={1} colorScheme="green">
-                  1
+                  {next}
                 </Badge>
               </Badge>
               <Badge ml={2}>
                 Address:
                 <Badge ml={1} colorScheme="green">
-                  0x0000...0000
+                  {truncatedAddress}
                 </Badge>
               </Badge>
             </Flex>

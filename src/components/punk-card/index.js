@@ -6,7 +6,7 @@ import {
   Image,
 } from "@chakra-ui/react";
 
-const PunkCard = ({ image, name, ...props }) => {
+const PunkCard = ({ tokenId, image, name, ...props }) => {
   return (
     <Box
       role={"group"}
@@ -52,7 +52,7 @@ const PunkCard = ({ image, name, ...props }) => {
       </Box>
       <Stack pt={10} align={"center"}>
         <Heading fontSize={"xl"} fontFamily={"body"} fontWeight={500}>
-          {name}
+          {`${name} ${tokenId}`}
         </Heading>
       </Stack>
     </Box>

@@ -91,9 +91,7 @@ const useNftPunksData = () => {
       );
 
       const punk = await Promise.all(punksPromise);
-      console.log(punk);
       setPunks(punk);
-
       setLoading(false);
     }
   }, [nftPunks]);
@@ -110,8 +108,31 @@ const useNftPunksData = () => {
 };
 
 // Singular
-// const usePlatziPunkData = () => {
+const useNftPunkData = (tokenId = null) => {
+  const [punk, setPunk] = useState({});
+  const [loading, setLoading] = useState(true);
+  const nftPunks = useNFTPunks();
 
-// }
+  const update = useCallback(async () => {
+    if (nftPunks && tokenId != null) {
+      setLoading(true);
 
-export { useNftPunksData };
+      const toSet = await getPunkData({ tokenId, nftPunks });
+      setPunk(toSet);
+
+      setLoading(false);
+    }
+  }, [nftPunks, tokenId]);
+
+  useEffect(() => {
+    update();
+  }, [update]);
+
+  return {
+    loading,
+    punk,
+    update,
+  };
+};
+
+export { useNftPunksData, useNftPunkData };
