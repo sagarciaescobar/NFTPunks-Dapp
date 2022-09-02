@@ -1,3 +1,4 @@
+import { useWeb3React } from "@web3-react/core";
 import { useCallback, useEffect, useState } from "react";
 import { useNFTPunks } from "../useNFTPunks";
 
@@ -72,8 +73,9 @@ const getPunkData = async ({ nftPunks, tokenId }) => {
 };
 
 // Plural
-const useNftPunksData = () => {
+const useNftPunksData = ({ owner = null } = {}) => {
   const [punks, setPunks] = useState([]);
+  const { library } = useWeb3React();
   const [loading, setLoading] = useState(true);
   const nftPunks = useNFTPunks();
 
@@ -83,8 +85,18 @@ const useNftPunksData = () => {
 
       let tokenIds;
 
-      const totalSupply = await nftPunks.methods.totalSupply().call();
-      tokenIds = new Array(Number(totalSupply)).fill().map((_, index) => index);
+      if (!library.utils.isAddress(owner)) {
+        const totalSupply = await nftPunks.methods.totalSupply().call();
+        tokenIds = new Array(Number(totalSupply))
+          .fill()
+          .map((_, index) => index);
+      } else {
+        const balanceOf = await nftPunks.methods.balanceOf(owner).call();
+        const tokeIdOfOwner = new Array(Number(balanceOf))
+          .fill()
+          .map((_, i) => nftPunks.methods.tokenOfOwnerByIndex(owner, i).call());
+        tokenIds = await Promise.all(tokeIdOfOwner);
+      }
 
       const punksPromise = await tokenIds.map((tokenId) =>
         getPunkData({ nftPunks, tokenId })
@@ -94,7 +106,7 @@ const useNftPunksData = () => {
       setPunks(punk);
       setLoading(false);
     }
-  }, [nftPunks]);
+  }, [nftPunks, owner, library?.utils]);
 
   useEffect(() => {
     update();

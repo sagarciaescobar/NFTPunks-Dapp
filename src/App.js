@@ -11,7 +11,7 @@ function App() {
       <MainLayout>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/nft" element={<Nft />} />
+          <Route path="/nft" exact element={<Nft />} />
           <Route path="/nft/:tokenId" element={<Punk />} />
         </Routes>
       </MainLayout>

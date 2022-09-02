@@ -10,18 +10,70 @@ import {
   Tbody,
   Button,
   Tag,
+  useToast,
 } from "@chakra-ui/react";
+import { useState } from "react";
 import { useWeb3React } from "@web3-react/core";
 import RequestAccess from "../../components/request-access";
 import PunkCard from "../../components/punk-card";
 import { useNftPunkData } from "../../hooks/useNFTPunksData";
 import { useParams } from "react-router-dom";
 import Loading from "../../components/loading";
+import { useNFTPunks } from "../../hooks/useNFTPunks";
 
 const Punk = () => {
-  const { active, account } = useWeb3React();
+  const { active, account, library } = useWeb3React();
   const { tokenId } = useParams();
-  const { loading, punk } = useNftPunkData(tokenId);
+  const { loading, punk, update } = useNftPunkData(tokenId);
+  const toast = useToast();
+  const [, setTransfering] = useState(false);
+  const nftPunks = useNFTPunks();
+
+  const transfer = () => {
+    setTransfering(true);
+    const address = prompt("Ingresa la direccion de destino");
+    const isAddress = library.utils.isAddress(address);
+    console.log(punk.owner);
+    console.log(account);
+    console.log(address);
+    console.log(punk);
+    if (!isAddress) {
+      toast({
+        title: "Direccion invalida",
+        description: "la direccion no es una direccion de etherum",
+        status: "error",
+      });
+      setTransfering(false);
+    } else {
+      nftPunks.methods
+        .safeTransferFrom(punk.owner, address, punk.tokenId)
+        .send({ from: account })
+        .on("error", () => {
+          setTransfering(false);
+          toast({
+            title: "Direccion invalida",
+            description: "la direccion no es una direccion de etherum",
+            status: "error",
+          });
+        })
+        .on("transactionHash", (txHash) => {
+          toast({
+            title: "Transaccion valida",
+            description: txHash,
+            status: "info",
+          });
+        })
+        .on("receipt", () => {
+          setTransfering("false");
+          toast({
+            title: "Transaccion confirmada",
+            description: `El punk ahora pertenece a ${address}`,
+            status: "success",
+          });
+          update();
+        });
+    }
+  };
 
   if (!active) return <RequestAccess />;
 
@@ -39,15 +91,20 @@ const Punk = () => {
             base: "auto",
             md: 0,
           }}
+          tokenId={tokenId}
           name={punk.name}
           image={punk.image}
         />
-        <Button disabled={account !== punk.owner} colorScheme="green">
+        <Button
+          disabled={account !== punk.owner}
+          onClick={transfer}
+          colorScheme="green"
+        >
           {account !== punk.owner ? "No eres el dueño" : "Transferir"}
         </Button>
       </Stack>
       <Stack width="100%" spacing={5}>
-        <Heading>{punk.name}</Heading>
+        <Heading>{`${punk.name} ${tokenId}`}</Heading>
         <Text fontSize="xl">{punk.description}</Text>
         <Text fontWeight={600}>
           DNA:
